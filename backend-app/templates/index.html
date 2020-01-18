@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button id="hello-btn">Get hello!</button>
+    <script>
+      const helloBtn = document
+        .getElementById("hello-btn")
+        .addEventListener("click", getHello);
+      function getHello() {
+        fetch("/hello")
+          .then(resp => resp.json())
+          .then(resp => {
+            console.log(resp);
+            const elem = document.createElement("p");
+            elem.textContent = resp.msg;
+            document.body.appendChild(elem);
+          });
+      }
+    </script>
+  </body>
+</html>
