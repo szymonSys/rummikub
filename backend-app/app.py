@@ -14,24 +14,41 @@ host = Host()
 # https://docs.python.org/3/library/random.html#random.random
 
 players = [Player('szymon'), Player('barbara'), Player('arkadiusz')]
-game = Game('local', players)
+game2 = Game(2, 'multiplayer', players[1])
+
+game2.add_player(players[0])
+game2.add_player(players[2])
+
+for player in game2.players:
+    print('player key: ', player.get_key(), 'game key: ', game2.get_key())
+
+for player in game2.players:
+    print(player.name, player.id)
+    for block in player.blocks:
+        print(block.get_dict())
+print('---------')
+for block in game2.unused_blocks:
+    print(block.get_dict())
+
+game = Game(1, 'local', players[0])
 blocks = game.make_blocks()
-blocks_set = Set(1, [Block(1, 'green', 5), Block(2, 'blue', 5),
-                     Block(3, 'yellow', 5)])
-blocks_set.add_blocks(
-    *[Block(6, 'purple', 0)], update=True)
+blocks1 = [Block(1, 'green', 5), Block(2, 'blue', 5),
+           Block(3, 'yellow', 5)]
 
-blocks_set.replace_joker(Block(104, 'red', 5, 1))
+blocks2 = [Block(10, 'green', 8), Block(22, 'purple', 0), Block(9, 'green', 7), Block(
+    103, 'green', 5), Block(32, 'green', 4), Block(99, 'green', 9)]
 
-blocks_set2 = Set(
-    2, [Block(10, 'green', 8), Block(22, 'purple', 0), Block(9, 'green', 7), Block(103, 'green', 5), Block(32, 'green', 4), Block(99, 'green', 9)])
+game.board.add_set(blocks1)
+game.board.add_set(blocks2)
 
-blocks_set2.add_blocks(Block(97, 'green', 10),
-                       Block(95, 'green', 3), update=True)
-joker = blocks_set2.replace_joker(Block(106, 'green', 6))
+game.board.update_set(1,
+                      *[Block(6, 'purple', 0)], action='add')
 
-game.board.add_set(blocks_set)
-game.board.add_set(blocks_set2)
+game.board.update_set(1, *[Block(104, 'red', 5, 1)], action="replace")
+
+game.board.update_set(2, *[Block(97, 'green', 10),
+                           Block(95, 'green', 3)], action="add")
+game.board.update_set(2, *[Block(106, 'green', 6)], action="replace")
 
 
 for s in game.board.sets:

@@ -150,6 +150,8 @@ class Set(WithRepr, WithStr, TypeControl):
         if new_blocks_type == 'series' or new_blocks_type == 'collection':
             self.is_full = False
             self.blocks = new_blocks
+            # if len(removed_blocks) != len(block_ids):
+            #     return None
             if as_dict:
                 return [removed.get_dict() for removed in removed_blocks]
             else:

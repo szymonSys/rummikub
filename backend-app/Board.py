@@ -10,6 +10,8 @@ class ArgumentException(Exception):
 
 
 class Board(WithRepr, WithStr, TypeControl):
+    _next_set_id = 1
+
     def __init__(self, sets=[]):
         self.sets = self.set_value(sets, Set)
 
@@ -98,10 +100,16 @@ class Board(WithRepr, WithStr, TypeControl):
             else:
                 return self.set_sets
 
-    def add_set(self, new_set):
-        if self.check_instance(new_set, Set) and self.check_instance(new_set.blocks, Block):
-            if bool(len(new_set.blocks)) and bool(new_set.type):
-                self.sets.append(new_set)
+    def add_set(self, blocks, SetClass=Set):
+        added = False
+        if self.check_instance(blocks, Block) and isinstance(blocks, (list, tuple)) and len(blocks) >= 3:
+            new_set = SetClass(self._next_set_id, blocks)
+            if self.check_instance(new_set, Set):
+                if bool(new_set.type):
+                    self.sets.append(new_set)
+                    self._next_set_id += 1
+                    added = True
+        return added
 
     def remove_set(self, set_id):
         for s in self.sets:
