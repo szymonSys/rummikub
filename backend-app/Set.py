@@ -2,6 +2,7 @@ from WithRepr import WithRepr
 from WithStr import WithStr
 from TypeControl import TypeControl
 from Block import Block
+from Player import Player
 
 
 class Set(WithRepr, WithStr, TypeControl):
@@ -29,11 +30,13 @@ class Set(WithRepr, WithStr, TypeControl):
                     return block
         return None
 
-    def replace_joker(self, new_block):
+    def replace_joker(self, new_block, player=None):
         joker = None
         has_joker = False
         if(not self.check_instance(new_block, Block)):
             return joker
+        if not self.check_instance(player, Player):
+            return False
         for block in self.blocks:
             if block.value == 0:
                 index = self.blocks.index(block)
@@ -62,6 +65,8 @@ class Set(WithRepr, WithStr, TypeControl):
             new_block.set_id == self.id
             new_block.set_membership(set_id=self.id)
             self.blocks[index] = new_block
+            joker.set_membership(player_id=player.id)
+            player.add_block(joker)
         return joker
 
     def check_type(self, blocks, length=0):
@@ -84,7 +89,9 @@ class Set(WithRepr, WithStr, TypeControl):
                     break
             i = zeroes_quantity
             while i < len(blocks) - 1:
-                if blocks[i+1].value - blocks[i].value != 1 or blocks[i+1].color != blocks[i].color:
+                if blocks[i+1].color != blocks[i].color and blocks[i].color != 'purple':
+                    return False
+                if blocks[i+1].value - blocks[i].value != 1:
                     if blocks[i+1].value - blocks[i].value == 2:
                         if zeroes_quantity > 0:
                             removing = blocks[zeroes_quantity - 1]
@@ -93,7 +100,7 @@ class Set(WithRepr, WithStr, TypeControl):
                             zeroes_quantity -= 1
                         else:
                             return False
-                    elif blocks[i+1].value - blocks[i].value > 2:
+                    elif blocks[i+1].value - blocks[i].value > 2 or blocks[i+1].value - blocks[i].value == 0:
                         return False
                 i += 1
             return True

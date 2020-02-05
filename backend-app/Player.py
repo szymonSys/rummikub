@@ -8,15 +8,16 @@ from KeyGenerator import KeyGenerator
 
 class Player(WithRepr, WithStr, TypeControl):
 
-    def __init__(self, name, player_type='net', state='in_lobby', blocks=[], game_id=None, game_key=None, key_generator=KeyGenerator.generate_key):
+    def __init__(self, name, player_type='net', key_generator=KeyGenerator.generate_key):
         self.id = None
         self.name = name
         self.type = player_type
-        self.state = state
-        self.blocks = self.set_value(blocks, Block)
-        self.game_id = game_id
+        self.state = 'lobby'
+        self.blocks = []
+        self._game_key = None
         self._key = key_generator()
         self.has_clean_set = False
+        self.got_blocks = False
 
     def get_dict(self):
         return self.__dict__
@@ -24,23 +25,49 @@ class Player(WithRepr, WithStr, TypeControl):
     def get_key(self):
         return self._key
 
+    def get_game_key(self):
+        return self._game_key
+
+    def set_game_key(self, game_key):
+        if not isinstance(game_key, str):
+            return False
+        self._game_key = game_key
+        return True
+
+    def change_to_game(self):
+        self.state = 'game'
+        return True
+
+    def change_to_round(self):
+        self.state = 'round'
+        return True
+
+    def change_to_win(self):
+        self.state = 'win'
+
     def get_blocks(self):
         return [block.get_dict() for block in self.blocks]
 
-    def remove_blocks(self, block_ids, as_dict=False):
-        if len(self.blocks) < len(block_ids):
+    def remove_blocks(self, *blocks_ids, as_dict=False):
+        if len(self.blocks) < len(blocks_ids):
+            print(self.name, len(self.blocks), len(blocks_ids))
             return None
-        new_blocks = self.blocks
+        copied_blocks = self.blocks[:]
         removed_blocks = []
-        for b_id in block_ids:
+        for b_id in blocks_ids:
             if not isinstance(b_id, int):
                 return None
-            for block in new_blocks:
+            for block in copied_blocks:
                 if b_id == block.id:
-                    new_blocks.remove(block)
+                    copied_blocks.remove(block)
                     removed_blocks.append(block)
         if not bool(len(removed_blocks)):
             return None
+        self.blocks = copied_blocks
+        for block in self.blocks:
+            print(block.get_dict())
+        for block in removed_blocks:
+            print(block.get_dict())
         if as_dict:
             return [removed.get_dict() for removed in removed_blocks]
         else:
@@ -51,6 +78,13 @@ class Player(WithRepr, WithStr, TypeControl):
         if not self.check_instance(block, Block):
             return None
         self.blocks.append(block)
+
+    def add_blocks(self, blocks):
+        if not self.check_instance(blocks, Block):
+            return False
+        for block in blocks:
+            self.add_block(block)
+        return True
 
     def find_block(self, block_id, as_dict=False):
         for block in self.blocks:
