@@ -96,7 +96,7 @@ class Game(WithRepr, WithStr, TypeControl):
 
     def find_player(self, player_id=None, player_key=None, as_dict=False):
         for player in self.players:
-            if (bool(player_id) and player.id == player_id) or (bool(player_key) and player._key == player_key):
+            if player.id == player_id or player._key == player_key:
                 if as_dict:
                     return player.get_dict()
                 else:
@@ -234,11 +234,11 @@ class Game(WithRepr, WithStr, TypeControl):
                 has_change = True
         return has_change
 
-    def check_round(self, player_key, round_number):
-        has_change = False
-        if isinstance(round_number, int) and round_number > self.round_data.get('number') and isinstance(player_key, str) and player_key != self.round_data.get('playerKey'):
-            has_change = True
-        return has_change
+    def check_round(self, player_key):
+        if isinstance(player_key, str):
+            if not self.check_instance(self.find_player(player_key), Player):
+                return None
+            return self.round_data.get('isOngoing')
 
     def check_board(self, board_id):
         has_change = False
@@ -247,9 +247,9 @@ class Game(WithRepr, WithStr, TypeControl):
         return has_change
 
     def update_round_data(self, is_ongoing, as_dict=True):
-        if not isinstance(is_ongoing, bool) and self.round_data.get('isOngoing') == is_ongoing:
+        if not isinstance(is_ongoing, bool) or self.round_data.get('isOngoing') == is_ongoing:
             return None
-        if not is_ongoing and self.round_data.get('isOngoing'):
+        if is_ongoing and not self.round_data.get('isOngoing'):
             next_player = self._next_player()
             if not bool(next_player):
                 return None

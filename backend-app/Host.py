@@ -36,7 +36,7 @@ class Host(WithStr, WithRepr, TypeControl):
             return games
         return self._games
 
-    def check_data(self, prev_state, player_key, round_number, board_id, game_key=None, target_game=None):
+    def check_data(self, prev_state, board_id, player_key, game_key=None, target_game=None):
         data_status = None
         if isinstance(game_key, str):
             game = self.find_game(game_key)
@@ -44,8 +44,8 @@ class Host(WithStr, WithRepr, TypeControl):
             game = target_game
         if not self.check_instance(game, Game):
             return data_status
-        data_status = {'game': game.check_game(prev_state), 'round': game.check_round(
-            player_key, round_number), 'board': game.check_board(board_id)}
+        data_status = {'gameIsChanged': game.check_game(prev_state), 'boardIsChanged': game.check_board(board_id), 'roundIsOngoing': game.check_round(
+            player_key)}
         return data_status
 
     def menage_round(self, start=False, game_key=None, target_game=None):
@@ -66,10 +66,11 @@ class Host(WithStr, WithRepr, TypeControl):
             'state': game.state,
             'hasPassword': has_password,
             'type': game.type,
-            'key': game.game_key,
+            'key': game._key,
             'name': game.name,
             'slots': game.slots,
-            'winner': game.winner
+            'winner': game.winner,
+            # 'boardId': game.board.state_id
         }
         game_data['playersData'] = [{'name': player.name, 'id': player.id, 'blocksQuantity': len(
             player.blocks)} for player in game.players]
@@ -92,16 +93,17 @@ class Host(WithStr, WithRepr, TypeControl):
         if not self.check_instance(player, Player):
             return None
         data = {
+            'blocks': [],
             'id': player.id,
             'name': player.name,
             'type': player.type,
-            'gameKey': player.game_key,
+            'gameKey': player._game_key,
             'hasCleanSet': player.has_clean_set
         }
         if bool(player_key) or bool(p_key):
             data['playerKey'] = player.get_key()
             if game.state == 'run' and not player.got_blocks:
-                data['blocks'] = self.get_player_blocks_data(player)
+                data['blocks'].extend(self.get_player_blocks_data(player))
                 player.got_blocks = True
         else:
             data['blockQuantity'] = len(player.blocks)
@@ -152,13 +154,13 @@ class Host(WithStr, WithRepr, TypeControl):
             data = game.round_data
         return data
 
-    def get_games_data(self, game_key=None, target_game=None):
+    def get_games_data(self, player_key=None, game_key=None, target_game=None):
         if not isinstance(game_key, str) and not self.check_instance(target_game, Game):
             games_data = []
-            for game in self._games:
-                game = self.find_game(game_key)
+            for key in self._games:
+                game = self._games[key]
                 if self.check_instance(game, Game):
-                    games_data.append(game)
+                    games_data.append(self._set_game_data(game))
             return games_data
         if bool(target_game):
             game = target_game
@@ -166,8 +168,14 @@ class Host(WithStr, WithRepr, TypeControl):
             game = self.find_game(game_key)
         if not self.check_instance(game, Game):
             return None
-        game_data = self._set_game_data(game)
-        return game_data
+        if not isinstance(player_key, str):
+            return None
+        player = game.find_player(player_key=player_key)
+        if self.check_instance(player, Player):
+            game_data = self._set_game_data(game)
+            return game_data
+        print(game.players[0]._key)
+        return None
 
     def find_game(self, game_key, as_dict=False):
         found_game = None
@@ -289,6 +297,7 @@ class Host(WithStr, WithRepr, TypeControl):
                     founder, name=game_name, password=password, slots=slots)
         if not self.check_instance(game, Game):
             return None
+        # self.add_game(game)
         return game
 
     def add_game(self, game):
@@ -301,12 +310,14 @@ class Host(WithStr, WithRepr, TypeControl):
     def join_player(self, player, game_key=None, target_game=None, password=None):
         if self.check_instance(target_game, Game):
             game = target_game
+            g_key = game.get_key()
         elif isinstance(game_key, str):
             game = self.find_game(game_key)
+            g_key = game_key
         else:
             return None
         if not self.check_instance(game, Game) or not self.check_instance(player, Player):
-            return False
+            return None
         verified = True
         joined = False
         if bool(game._password):
@@ -314,10 +325,15 @@ class Host(WithStr, WithRepr, TypeControl):
                 verified = False
         if verified:
             joined = game.add_player(player)
-        if verified and joined and game.check_is_ready() and player.set_game_key(game_key):
+        print('is ready: ', game.check_is_ready())
+        if verified and joined and player.set_game_key(g_key) and game.check_is_ready():
             if game._update_to_ready():
                 game.start_game()
-        return (verified, joined, game.state)
+        return {
+            "verified": verified,
+            "joined": joined,
+            "state": game.state
+        }
 
     def check_winner(self, game_key):
         game = self.find_game(game_key=game_key)
