@@ -70,6 +70,7 @@ class Host(WithStr, WithRepr, TypeControl):
             'name': game.name,
             'slots': game.slots,
             'winner': game.winner,
+            'founderName': game.founder.name
             # 'boardId': game.board.state_id
         }
         game_data['playersData'] = [{'name': player.name, 'id': player.id, 'blocksQuantity': len(
