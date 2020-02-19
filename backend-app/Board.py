@@ -4,6 +4,7 @@ from TypeControl import TypeControl
 from Set import Set
 from Block import Block
 from KeyGenerator import KeyGenerator
+import copy
 
 
 class ArgumentException(Exception):
@@ -20,7 +21,7 @@ class Board(WithRepr, WithStr, TypeControl):
 
     def get_dict(self):
         sets = [s.get_dict() for s in self.sets]
-        board_dict = self.__dict__
+        board_dict = copy.deepcopy(self.__dict__)
         board_dict['sets'] = sets
         return board_dict
 

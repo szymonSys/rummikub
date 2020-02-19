@@ -7,6 +7,7 @@ from Board import Board
 from Player import Player
 from Block import Block
 from KeyGenerator import KeyGenerator
+import copy
 
 
 class SlotsExtension(Exception):
@@ -41,7 +42,7 @@ class Game(WithRepr, WithStr, TypeControl):
         self.unused_blocks = self.make_blocks()
         self._key = key_generator()
         self.winner = None
-        if slots > 1 and slots <= 4:
+        if (slots) > 1 and slots <= 4:
             self.slots = slots
         else:
             self.slots = None
@@ -53,7 +54,7 @@ class Game(WithRepr, WithStr, TypeControl):
         board = self.get_board()
         players = self.get_players()
         blocks = self.get_blocks()
-        game_dict = self.__dict__
+        game_dict = copy.deepcopy(self.__dict__)
         game_dict['board'] = board
         game_dict['players'] = players
         game_dict['unused_blocks'] = blocks
@@ -160,6 +161,9 @@ class Game(WithRepr, WithStr, TypeControl):
         #     return False
 
     def add_player_random_block(self, player_id=None, player=None):
+        if(not bool(len(self.unused_blocks))):
+            self.state = 'end'
+            return False
         if self.check_instance(player, Player):
             this_player = player
         elif isinstance(player_id, int) or self.check_instance(player, Player):
@@ -217,10 +221,10 @@ class Game(WithRepr, WithStr, TypeControl):
                                for player in self.players]
             random.shuffle(random_sequence)
             self._players_queue = random_sequence
-            self.round_data['player_key'] = self._players_queue[0][0]
-            self.round_data['player_id'] = self._players_queue[0][1]
+            self.round_data['playerKey'] = self._players_queue[0][0]
+            self.round_data['playerId'] = self._players_queue[0][1]
             self.round_data['number'] = 1
-            self.round_data['is_ongoing'] = True
+            self.round_data['isOngoing'] = True
             self.state = 'run'
             for player in self.players:
                 player.change_to_game()
@@ -236,9 +240,9 @@ class Game(WithRepr, WithStr, TypeControl):
 
     def check_round(self, player_key):
         if isinstance(player_key, str):
-            if not self.check_instance(self.find_player(player_key), Player):
+            if not self.check_instance(self.find_player(player_key=player_key), Player):
                 return None
-            return self.round_data.get('isOngoing')
+            return self.round_data.get('number')
 
     def check_board(self, board_id):
         has_change = False
@@ -248,7 +252,9 @@ class Game(WithRepr, WithStr, TypeControl):
 
     def update_round_data(self, is_ongoing, as_dict=True):
         if not isinstance(is_ongoing, bool) or self.round_data.get('isOngoing') == is_ongoing:
-            return None
+            if as_dict:
+                return self.get_round_data()
+            return self.round_data
         if is_ongoing and not self.round_data.get('isOngoing'):
             next_player = self._next_player()
             if not bool(next_player):
@@ -276,7 +282,6 @@ class Game(WithRepr, WithStr, TypeControl):
 
     def _set_winner_if_finished(self, p_key):
         if self.state == 'run':
-            print(p_key)
             player = self.find_player(player_key=p_key)
             if not bool(len(player.blocks)):
                 self.is_finished = True

@@ -4,6 +4,7 @@ from WithStr import WithStr
 from TypeControl import TypeControl
 from Block import Block
 from KeyGenerator import KeyGenerator
+import copy
 
 
 class Player(WithRepr, WithStr, TypeControl):
@@ -18,9 +19,10 @@ class Player(WithRepr, WithStr, TypeControl):
         self._key = key_generator()
         self.has_clean_set = False
         self.got_blocks = False
+        self.drew_block = False
 
     def get_dict(self):
-        return self.__dict__
+        return copy.deepcopy(self.__dict__)
 
     def get_key(self):
         return self._key
@@ -50,7 +52,6 @@ class Player(WithRepr, WithStr, TypeControl):
 
     def remove_blocks(self, *blocks_ids, as_dict=False):
         if len(self.blocks) < len(blocks_ids):
-            print(self.name, len(self.blocks), len(blocks_ids))
             return None
         copied_blocks = self.blocks[:]
         removed_blocks = []
@@ -64,10 +65,6 @@ class Player(WithRepr, WithStr, TypeControl):
         if not bool(len(removed_blocks)):
             return None
         self.blocks = copied_blocks
-        for block in self.blocks:
-            print(block.get_dict())
-        for block in removed_blocks:
-            print(block.get_dict())
         if as_dict:
             return [removed.get_dict() for removed in removed_blocks]
         else:

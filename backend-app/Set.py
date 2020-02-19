@@ -3,19 +3,24 @@ from WithStr import WithStr
 from TypeControl import TypeControl
 from Block import Block
 from Player import Player
+import copy
 
 
 class Set(WithRepr, WithStr, TypeControl):
-    def __init__(self, set_id, blocks=[]):
+    def __init__(self, set_id, blocks):
         self.id = set_id
         self.is_full = False
         self.blocks = []
         self.type = self.add_blocks(*self.set_value(blocks, Block))
 
     def get_dict(self):
-        blocks = [block.get_dict() for block in self.blocks]
-        dict_set = self.__dict__
+        print(self.blocks)
+        blocks = self.get_blocks()
+        dict_set = copy.deepcopy(self.__dict__)
+        print(dict_set)
         dict_set['blocks'] = blocks
+        print("-------------")
+        print(self.blocks)
         return dict_set
 
     def get_blocks(self):
@@ -77,7 +82,6 @@ class Set(WithRepr, WithStr, TypeControl):
             if (self._check_series(blocks)):
                 self.type = 'series'
                 return self.type
-            self.type = None
             return None
 
     def _check_series(self, blocks):
@@ -150,6 +154,7 @@ class Set(WithRepr, WithStr, TypeControl):
             for block in self.blocks:
                 if b_id == block.id:
                     new_blocks.remove(block)
+                    # block.set_id = self.id
                     removed_blocks.append(block)
         if not bool(len(removed_blocks)):
             return None
@@ -167,7 +172,6 @@ class Set(WithRepr, WithStr, TypeControl):
 
     def add_blocks(self, *blocks, update=False):
         if self.is_full:
-            print('set is full')
             return False
         blocks_list = list(blocks)
         if self.check_instance(blocks_list, Block):

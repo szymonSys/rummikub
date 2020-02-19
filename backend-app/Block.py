@@ -1,5 +1,6 @@
 from WithRepr import WithRepr
 from WithStr import WithStr
+import copy
 
 
 class Block(WithRepr, WithStr):
@@ -23,4 +24,4 @@ class Block(WithRepr, WithStr):
             self.membership = None
 
     def get_dict(self):
-        return self.__dict__
+        return copy.deepcopy(self.__dict__)
